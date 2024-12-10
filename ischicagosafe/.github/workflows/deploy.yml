@@ -1,0 +1,39 @@
+name: Build and Push to DigitalOcean Container Registry
+
+on:
+  push:
+    branches:
+      - main # Change this to your deployment branch
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Docker Buildx (for multi-platform builds if needed)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Step 3: Log in to DigitalOcean's Docker registry
+      - name: Log in to DigitalOcean Container Registry
+        run: echo "${{ secrets.DO_TOKEN }}" | docker login -u "${{ secrets.DO_USER }}" --password-stdin registry.digitalocean.com
+
+      # Step 4: Build and tag Docker image
+      - name: Build Docker Image
+        run: |
+          docker build -t registry.digitalocean.com/istheeconomygood/crime:latest .
+
+      # Step 5: Push the Docker image to DigitalOcean
+      - name: Push Docker Image
+        run: |
+          docker push registry.digitalocean.com/istheeconomygood/crime:latest
+
+      # Step 6: Clean up
+      - name: Clean up
+        run: |
+          docker system prune -af
+          docker logout registry.digitalocean.com
